@@ -8,7 +8,7 @@
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # create directory for saving results
-dir.create("sim300_fmd",showWarnings=FALSE)
+dir.create("sim_300_fmd",showWarnings=FALSE)
 
 
 library(combinat)
@@ -243,37 +243,31 @@ for(i in 1:ncol(data_smoothed)){
 ###############################
 ########## NOT RUN ############
 ###############################
-# It is necessary to load the saved motifs candidates in the file motifs_candidate.RData in order to avoid a time consuming sequential candidate motifs discovery.
-# Otherwise a sequential functional motif discovery can be performed by running the commented code.
-
-
-
-#if('motifs_candidate.RData' %in% files){
+if('motifs_candidate.RData' %in% files){
   # candidate motifs already present, load them
-load('./sim300_fmd/motifs_candidate.RData')
-#}else{
+  load('./sim300_fmd/motifs_candidate.RData')
+}else{
   # The following part of code is very time consuming, especially if run in sequential mode
   # (worker_number = 1)
   # find candidate motifs with partially random initialization# find candidate motifs with partially random initialization
-#find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=V_init,
-#                                                        name = './simulated_300_fmd/len300', names_var = 'x(t)',
-#                                                        probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
-#                                                                               iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
-#                                                                               return_options = TRUE, return_init = TRUE,
-#                                                                               diss = diss, alpha = alpha,transformed=TRUE),
-#                                                        plot = TRUE, worker_number = 1)
-
-# find candidate motifs with random initialization
-n_init = 20 # number of partially random plus random initialization to try
-#find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,
-#                                                      name = './simulated_300_fmd/len300', names_var = 'x(t)',V_init=NULL,
-#                                                      probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
-#                                                                             iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
-#                                                                             return_options = TRUE, return_init = TRUE,
-#                                                                             diss = diss, alpha = alpha,transformed=TRUE),
-#                                                      plot = TRUE, worker_number = 1)
-#save(find_candidate_motifs_results, file = './sim300_fmd/motifs_candidate.RData')
-#}
+  find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=V_init,
+                                                        name = './sim300_fmd/len300', names_var = 'x(t)',
+                                                        probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
+                                                                               iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
+                                                                               return_options = TRUE, return_init = TRUE,
+                                                                               diss = diss, alpha = alpha,transformed=TRUE),
+                                                        plot = TRUE, worker_number = 1)
+  # find candidate motifs with random initialization
+  n_init = 20 # number of partially random plus random initialization to try
+  find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,
+                                                        name = './sim300_fmd/len300', names_var = 'x(t)',V_init=NULL,
+                                                        probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
+                                                                               iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
+                                                                               return_options = TRUE, return_init = TRUE,
+                                                                               diss = diss, alpha = alpha,transformed=TRUE),
+                                                        plot = TRUE, worker_number = 1)
+  save(find_candidate_motifs_results, file = './sim300_fmd/motifs_candidate.RData')
+}
 
 #load('./sim300_fmd/motifs_candidate.RData')
 
@@ -311,3 +305,37 @@ save(find_candidate_motifs_results, silhouette_average,
      cluster_candidate_motifs_results, motifs_search_results,
      file='./sim300_fmd/results_all.RData')
 
+
+#Motifs analysis for fmd 
+column_names=c("Motif","Length","Frequency","Radius")
+motifs_analysis=data.frame(c(1:19),motifs_search_results$V_length,
+                           motifs_search_results$V_frequencies,
+                           motifs_search_results$R_motifs)
+colnames(motifs_analysis)=column_names
+
+
+#Considering only the motifs with more than 5 occurrences:
+filtered_motifs_analysis=motifs_analysis[motifs_analysis$Frequency >= 5, ]
+# Renumber the Motif column
+filtered_motifs_analysis$Motif=seq_len(nrow(filtered_motifs_analysis))
+
+motifs_analysis_ordered=filtered_motifs_analysis[order(filtered_motifs_analysis$Length),]
+
+
+library("writexl")
+motifs_analysis_table=data.frame(Motif=motifs_analysis_ordered$Motif,
+                                 Length=motifs_analysis_ordered$Length,
+                                 Frequency=motifs_analysis_ordered$Frequency,
+                                 Radius=motifs_analysis_ordered$Radius)
+
+write_xlsx(motifs_analysis_ordered,"./sim300_fmd/simulated_motifs_analysis.xlsx")
+
+
+
+#Let's multiply the radius for 1000
+motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
+                                 Length=motifs_analysis_ordered$Length,
+                                 Frequency=motifs_analysis_ordered$Frequency,
+                                 Radius=motifs_analysis_ordered$Radius*1000)
+library("xtable")
+print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = FALSE)
