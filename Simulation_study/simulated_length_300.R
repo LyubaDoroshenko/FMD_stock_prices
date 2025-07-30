@@ -57,4 +57,4 @@ names(data_smoothed)=c("data_smoothed","data_smoothed_derivative")
 simulated300_data=data_smoothed
 
 
-save(simulated300_data, file = './sim300_fmd/data_smoothed.RData')
+save(simulated300_data, file = './data_smoothed.RData')
