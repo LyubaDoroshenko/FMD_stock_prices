@@ -18,7 +18,7 @@ library(dendextend)
 
 
 #Load smoothed curves simulated with Mixed causal-noncausal autoregressive process
-load("./sim300_fmd/data_smoothed.RData",smoothed_env <- new.env())
+load("./data_smoothed.RData",smoothed_env <- new.env())
 
 data_smoothed=smoothed_env$simulated300_data$data_smoothed
 data_smoothed_derivative=smoothed_env$simulated300_data$data_smoothed_derivative
