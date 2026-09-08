@@ -1,4 +1,4 @@
-# Functional Motif Discovery for Stock Market Prices
+# Functional Motif Discovery in Stock Market Prices
 This repository contains the R code and data files used in the article [Functional motif discovery in stock market prices](https://dx.doi.org/10.2139/ssrn.4642040) by Marzia A. Cremona, Lyubov Doroshenko and  Federico Severino.
 
 The folders `Simulation_study` and `Empirical_analysis` enclose codes of the simulation study and empirical analysis, respectively. 
