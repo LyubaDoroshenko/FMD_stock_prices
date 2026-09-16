@@ -567,3 +567,48 @@ dev.off()
 
 
 
+
+
+
+
+
+
+
+
+#Motifs analysis for fmd 
+column_names=c("Motif","Length","Frequency","Radius","Initialization")
+motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
+                           motifs_search_results$V_frequencies,
+                           motifs_search_results$R_motifs*100000,
+                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
+colnames(motifs_analysis)=column_names
+
+
+#Considering only the motifs with more than 5 occurrences:
+filtered_motifs_analysis=motifs_analysis[motifs_analysis$Frequency >= 5, ]
+# Renumber the Motif column
+filtered_motifs_analysis$Motif=seq_len(nrow(filtered_motifs_analysis))
+
+motifs_analysis_ordered=filtered_motifs_analysis[order(filtered_motifs_analysis$Length),]
+
+
+library("writexl")
+motifs_analysis_table=data.frame(Motif=motifs_analysis_ordered$Motif,
+                                 Length=motifs_analysis_ordered$Length,
+                                 Frequency=motifs_analysis_ordered$Frequency,
+                                 Radius=motifs_analysis_ordered$Radius,
+                                 Initialization=motifs_analysis_ordered$Initialization)
+
+write_xlsx(motifs_analysis_ordered,"./motifs_analysis.xlsx")
+
+
+
+#Let's multiply the radius for 1000
+motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
+                                       Length=motifs_analysis_ordered$Length,
+                                       Frequency=motifs_analysis_ordered$Frequency,
+                                       Radius=motifs_analysis_ordered$Radius,
+                                       Initialization=motifs_analysis_ordered$Initialization)
+library("xtable")
+print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = FALSE)
+
