@@ -8,7 +8,7 @@
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # create directory for saving results
-dir.create("sim_300_fmd",showWarnings=FALSE)
+dir.create("sim300_fmd",showWarnings=FALSE)
 
 
 library(combinat)
@@ -286,11 +286,11 @@ cluster_candidate_motifs_results = cluster_candidate_motifs(filter_candidate_mot
 
 ### plot cluster candidate motifs results
 pdf('./sim300_fmd/clustering_candidate_motifs.pdf', height = 12, width = 9)
-cluster_candidate_motifs_plot(cluster_candidate_motifs_results, ask = FALSE)# ,R_all=0.0002
+cluster_candidate_motifs_plot(cluster_candidate_motifs_results, ask = FALSE)#, R_all=0.0008)
 dev.off()
 
 ### search selected motifs
-motifs_search_results = motifs_search(cluster_candidate_motifs_results, #R_all = 0.005, 
+motifs_search_results = motifs_search(cluster_candidate_motifs_results, #R_all = 0.0008, 
                                       use_real_occurrences = FALSE, length_diff = 0.3)#length_diff=+Inf
 
 
@@ -306,11 +306,17 @@ save(find_candidate_motifs_results, silhouette_average,
      file='./sim300_fmd/results_all.RData')
 
 
+
+
+
+
+
 #Motifs analysis for fmd 
-column_names=c("Motif","Length","Frequency","Radius")
-motifs_analysis=data.frame(c(1:19),motifs_search_results$V_length,
+column_names=c("Motif","Length","Frequency","Radius","Initialization")
+motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
                            motifs_search_results$V_frequencies,
-                           motifs_search_results$R_motifs)
+                           motifs_search_results$R_motifs*1000,
+                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
 colnames(motifs_analysis)=column_names
 
 
@@ -326,7 +332,8 @@ library("writexl")
 motifs_analysis_table=data.frame(Motif=motifs_analysis_ordered$Motif,
                                  Length=motifs_analysis_ordered$Length,
                                  Frequency=motifs_analysis_ordered$Frequency,
-                                 Radius=motifs_analysis_ordered$Radius)
+                                 Radius=motifs_analysis_ordered$Radius,
+                                 Initialization=motifs_analysis_ordered$Initialization)
 
 write_xlsx(motifs_analysis_ordered,"./sim300_fmd/simulated_motifs_analysis.xlsx")
 
@@ -334,8 +341,27 @@ write_xlsx(motifs_analysis_ordered,"./sim300_fmd/simulated_motifs_analysis.xlsx"
 
 #Let's multiply the radius for 1000
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
-                                 Length=motifs_analysis_ordered$Length,
-                                 Frequency=motifs_analysis_ordered$Frequency,
-                                 Radius=motifs_analysis_ordered$Radius*1000)
+                                       Length=motifs_analysis_ordered$Length,
+                                       Frequency=motifs_analysis_ordered$Frequency,
+                                       Radius=motifs_analysis_ordered$Radius,
+                                       Initialization=motifs_analysis_ordered$Initialization)
 library("xtable")
 print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = FALSE)
+
+
+
+# plots for paper
+pdf('./sim300_fmd/motifs_for_paper.pdf', height = 4, width = 6)
+motifs_search_plot_for_paper(motifs_search_results, index_plot_in_curves = c(), freq_threshold = 5,
+                             transformed=TRUE)
+dev.off()
+
+pdf('./sim300_fmd/motifs_search_results_for_paper_all_motifs.pdf', height = 4, width = 6)
+motifs_search_plot_for_paper(motifs_search_results, freq_threshold = 5,
+                             transformed=TRUE)
+dev.off()
+
+pdf('./sim300_fmd/motifs_search_results_for_paper.pdf', height = 4, width = 6)
+motifs_search_plot_for_paper(motifs_search_results, index_plot_in_curves = c(12,10), freq_threshold = 5,
+                             transformed=TRUE)
+dev.off()
