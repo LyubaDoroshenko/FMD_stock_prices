@@ -599,7 +599,7 @@ motifs_analysis_table=data.frame(Motif=motifs_analysis_ordered$Motif,
                                  Radius=motifs_analysis_ordered$Radius,
                                  Initialization=motifs_analysis_ordered$Initialization)
 
-write_xlsx(motifs_analysis_ordered,"./motifs_analysis.xlsx")
+write_xlsx(motifs_analysis_ordered,"./stock_prices_motifs/motifs_analysis.xlsx")
 
 
 
