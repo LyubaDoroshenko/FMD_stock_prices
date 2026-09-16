@@ -167,12 +167,12 @@ print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = F
 
 
 
-pdf('./sim300_only_random_fmd/motifs_search_results_for_paper_all_motifs.pdf', height = 4, width = 6)
+pdf('./sim300_only_random_fmd/motifs_search_results_only_random_for_paper_all_motifs.pdf', height = 4, width = 6)
 motifs_search_plot_for_paper(motifs_search_results, freq_threshold = 5,
                              transformed=TRUE)
 dev.off()
 
-pdf('./sim300_only_random_fmd/motifs_search_results_for_paper.pdf', height = 4, width = 6)
+pdf('./sim300_only_random_fmd/motifs_search_results_only_random_for_paper.pdf', height = 4, width = 6)
 motifs_search_plot_for_paper(motifs_search_results, index_plot_in_curves = c(8,2), freq_threshold = 5,
                              transformed=TRUE)
 dev.off()
