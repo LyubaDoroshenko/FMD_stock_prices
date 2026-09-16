@@ -2122,7 +2122,7 @@ find_candidate_motifs <- function(Y0,Y1=NULL,K,c,n_init=10,name='results',names_
     return(NULL)
   return(list(V0_clean=probKMA_results$V0_clean[index],V1_clean=probKMA_results$V1_clean[index],
               D=probKMA_results$D[,index],D_clean=probKMA_results$D_clean[,index],P=probKMA_results$P[,index],P_clean=probKMA_results$P_clean[,index],
-              c=probKMA_results$c[index],K=rep(probKMA_results$K,length(index))))
+              c=probKMA_results$c[index],K=rep(probKMA_results$K,length(index)),v_init=probKMA_results$v_init[index]))
 }
 
 
@@ -2185,10 +2185,11 @@ filter_candidate_motifs <- function(find_candidate_motifs_results,sil_threshold=
   P_clean=Reduce(cbind,lapply(motifs,function(motifs) motifs$P_clean))[,index]
   c=Reduce(c,lapply(motifs,function(motifs) motifs$c))[index]
   K=Reduce(c,lapply(motifs,function(motifs) motifs$K))[index]
+  v_init=Reduce(c,lapply(motifs,function(motifs) motifs$v_init))[index]
   
   ### output ##################################################################################################
   load(paste0(name,"_K",K[1],"_c",c[1],'/random',1,'.RData'))
-  return(list(V0_clean=V0_clean,V1_clean=V1_clean,D_clean=D_clean,P_clean=P_clean,c=c,K=K,transformed=probKMA_results$transformed,
+  return(list(V0_clean=V0_clean,V1_clean=V1_clean,D_clean=D_clean,P_clean=P_clean,c=c,K=K,v_init=v_init,transformed=probKMA_results$transformed,
               Y0=probKMA_results$Y0,Y1=probKMA_results$Y1,
               diss=probKMA_results$diss,alpha=probKMA_results$alpha,w=probKMA_results$w,max_gap=probKMA_results$max_gap))
 }
@@ -2916,13 +2917,14 @@ motifs_search <- function(cluster_candidate_motifs_results,
     V0=lapply(V,function(v) v$v0)
     V1=lapply(V,function(v) v$v1)
   }
+  v_init=cluster_candidate_motifs_results$v_init[index_final]
   if(different_R_m_finding){
     R_motifs=V_R_m_finding
   }else{
     R_motifs=V_R_m
   }
   return(list(V0=V0,V1=V1,
-              V_length=V_length,V_occurrences=V_occurrences,V_frequencies=V_frequencies,V_mean_diss=V_mean_diss,
+              V_length=V_length,V_occurrences=V_occurrences,V_frequencies=V_frequencies,V_mean_diss=V_mean_diss,v_init=v_init,
               Y0=cluster_candidate_motifs_results$Y0,Y1=cluster_candidate_motifs_results$Y1,R_motifs=R_motifs))
 }
 
@@ -3416,6 +3418,122 @@ motifs_search_plot_norm <- function(motifs_search_results,ylab='',freq_threshold
         return()},motifs_search_results$Y0,motifs_search_results$Y1,seq_len(N))
     }
   }
+  
+  return()
+}
+
+
+############################PLOTTING THE NORMALIZED MOTIFS FOR PAPER
+motifs_search_plot_for_paper <- function(motifs_search_results,index_plot_in_curves=seq_along(motifs_search_results$V0),
+                                         freq_threshold=5,transformed=TRUE){
+  # Plot the results of motifs_search.
+  # motifs_search_results: output of motifs_search function.
+  # ylab: a vector of length d, with the titles for the y axis for each dimension.
+  # freq_threshold: plot only motifs with frequency at least equal to freq_threshold.
+  # transformed: if TRUE, y is normalized to [0,1].
+  
+  ### select motifs to plot ##################################################################################
+  d=ncol(motifs_search_results$Y0[[1]])
+  N=length(motifs_search_results$Y0)
+  index_plot=which(motifs_search_results$V_frequencies>=freq_threshold)
+  K=length(index_plot)
+  V0=motifs_search_results$V0[index_plot]
+  V1=motifs_search_results$V1[index_plot]
+  V_dom=lapply(V0,function(v) rowSums(!is.na(v))!=0)
+  V_length=motifs_search_results$V_length[index_plot]
+  V_occurrences=motifs_search_results$V_occurrences[index_plot]
+  V_frequencies=motifs_search_results$V_frequencies[index_plot]
+  V_mean_diss=motifs_search_results$V_mean_diss[index_plot]
+  R_motifs=motifs_search_results$R_motifs[index_plot]
+  
+  ### plot motifs ############################################################################################
+  #layout(matrix(c(seq_len(d),rep(d+1,d)),ncol=2),widths=c(7,1))
+  #lapply(seq_len(d),
+  #       function(j){
+  #         par(mar=c(3,4,4,2)+0.1)
+  #         plot(V0[[1]][,j],type='l',col=rainbow(K),lwd=5,lty=1,main=ylab[j],xlim=c(1,max(V_length)),
+  #              ylab=ylab[j],ylim=c(min(unlist(V0)),max(unlist(V0))))
+  #         mapply(function(v,k) points(v[,j],type='l',col=rainbow(K)[k+1],lwd=5,lty=1,ylab=ylab),
+  #                V0[-1],seq_len(K-1))
+  #         par(mar=c(0,0,0,0))
+  #         return()})
+  #plot.new()
+  #legend('left',paste('motif',seq_len(K)),col=rainbow(K),lwd=7,lty=1,bty="n",xpd=TRUE)
+  
+  ### plot motifs with matched curves ########################################################################
+  mapply(function(v,v_dom,v_occurrences,v_frequencies,k,R_motif){
+    Y0_inters_k=mapply(function(y,s_k_i,v_dom){
+      v_len=length(v_dom)
+      Y0_inters_k=as.matrix(as.matrix(y[s_k_i-1+seq_len(v_len),])[v_dom,])
+      return(Y0_inters_k)},
+      motifs_search_results$Y0[v_occurrences[,'curve']],v_occurrences[,'shift'],MoreArgs=list(v_dom),SIMPLIFY=FALSE)
+    #layout(matrix(1:(2*d),ncol=2,byrow=TRUE),widths=c(7,1))
+    Y0_diff_k=lapply(Y0_inters_k,
+                     function(Y0_inters_k){
+                       y0_min=apply(Y0_inters_k, 2, min, na.rm = TRUE)
+                       y0_max=apply(Y0_inters_k, 2, max, na.rm = TRUE)
+                       y0_diff=y0_max-y0_min
+                       return(y0_diff)
+                     })
+    lapply(seq_len(d),
+           function(j){
+             par(mar=c(2,3,2,1)+0.1)
+             par(mgp = c(1.5, 0.4, 0))
+             y_plot=matrix(NA,nrow=length(v_dom),ncol=length(Y0_inters_k))
+             if(transformed){
+               y_plot[v_dom,]=Reduce('cbind',
+                                     mapply(function(Y_inters_k, Y_diff_k) {
+                                       y0_min=min(Y_inters_k[,j])
+                                       y0_norm = t( (t(Y_inters_k[,j]) - y0_min[j]) / Y_diff_k[j] )
+                                       #print(dim(y0_norm))
+                                       y0_const = (Y_diff_k[j] == 0)
+                                       y0_norm[,y0_const] = 0.5
+                                       return(y0_norm)},
+                                       Y0_inters_k, Y0_diff_k, SIMPLIFY=FALSE) )
+             } else {
+               y_plot[v_dom,]=Reduce('cbind',lapply(Y_inters_k,function(Y_inters_k) Y_inters_k[,j]))
+             }
+             matplot(y_plot,type='l',col=v_occurrences[,'curve']+1,lwd=1,
+                     lty=1,ylab="v(t)",main="",cex.lab=1.5, cex.axis = 1.2, tcl = -0.3)
+             title(main = paste0('Motif ',k,' (',v_frequencies,' occurrences)'), cex.main = 1.5, line = 0.4)
+             points(v[,j],type='l',col='black',lwd=2,lty=1)
+             #par(mar=c(0,0,0,0))
+             #plot.new()
+             #legend('left',legend='motif center',col='black',lwd=7,lty=1,bty="n",xpd=TRUE)
+           })
+    return()},V0,V_dom,V_occurrences,V_frequencies,seq_len(K),R_motifs)
+  
+  ### plot curves with motifs ################################################################################
+  mapply(function(y0,i){
+    s_i=lapply(V_occurrences[index_plot_in_curves],function(occurrences) occurrences[occurrences[,'curve']==i,'shift'])
+    motifs_in_curve=rep(seq_len(length(index_plot_in_curves)),unlist(lapply(s_i,length)))
+    s_i=unlist(s_i)
+    Y_inters_k=mapply(function(v_dom,s_i_k,y){
+      v_len=length(v_dom)
+      Y_inters_k=matrix(NA,nrow=length(v_dom),ncol=d)
+      Y_inters_k[v_dom,]=as.matrix(as.matrix(y[s_i_k-1+seq_len(v_len),])[v_dom,])
+      return(Y_inters_k)},
+      V_dom[index_plot_in_curves][motifs_in_curve],s_i,MoreArgs=list(y0),SIMPLIFY=FALSE)
+    #layout(matrix(c(seq_len(d),rep(d+1,d)),ncol=2),widths=c(7,1))
+    lapply(seq_len(d),
+           function(j){
+             par(mar=c(2,3,2,1)+0.1)
+             par(mgp = c(1.5, 0.4, 0))
+             plot(y0[,j],type='l',lwd=1.5,main="",ylab="x(t)",xlab="",cex.lab=1.5, cex.axis = 1.2, tcl = -0.3)
+             title(main = paste('Curve',i), cex.main = 1.5, line = 0.4)
+             for(k in seq_along(motifs_in_curve)){
+               lines(s_i[k]-1+seq_len(V_length[index_plot_in_curves][motifs_in_curve[k]]),Y_inters_k[[k]][,j],col=rainbow(K)[index_plot_in_curves][motifs_in_curve[k]],lwd=1.5)
+             }
+           })
+    #plot.new()
+    #if(length(motifs_in_curve)==0){
+    #  legend_text=''
+    #}else{
+    #  legend_text=paste('motif',unique(motifs_in_curve))
+    #}
+    #legend('left',legend_text,col=rainbow(K)[unique(motifs_in_curve)],lwd=7,lty=1,bty="n",xpd=TRUE,title='Motifs')
+    return()},motifs_search_results$Y0,seq_len(N))
+  
   
   return()
 }
