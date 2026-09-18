@@ -408,7 +408,7 @@ motifs_search_results = motifs_search(cluster_candidate_motifs_results,R_all=0.0
                                       use_real_occurrences = FALSE, length_diff = 0.3,
                                       different_R_m_finding = TRUE)
 
-save(motifs_search_results, file = './stock_prices_motifs_shorter//motifs_search_results.RData')
+save(motifs_search_results, file = './stock_prices_motifs_shorter/motifs_search_results.RData')
 
 
 
