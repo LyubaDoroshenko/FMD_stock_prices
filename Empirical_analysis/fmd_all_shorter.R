@@ -349,32 +349,32 @@ for(i in 1:length(data_smoothed_all_stocks)){
 
 # The following part of code is very time consuming, especially if run in sequential mode
 # (worker_number = 1)
-if('motifs_candidate.RData' %in% files){
+#if('motifs_candidate.RData' %in% files){
   #if candidate motifs already present, load them
   load('./stock_prices_motifs_shorter/motifs_candidate.RData')
-}else{
+#}else{
   # find candidate motifs with partially random initialization
-find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=V_init,
-                                                      name = './stock_prices_motifs_shorter/motifs', names_var = 'x(t)',
-                                                      probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
-                                                                             iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
-                                                                             return_options = TRUE, return_init = TRUE,
-                                                                             diss = diss, alpha = alpha,transformed=TRUE),
-                                                      plot = TRUE, worker_number = 1)
+#find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=V_init,
+#                                                      name = './stock_prices_motifs_shorter/motifs', names_var = 'x(t)',
+#                                                      probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
+#                                                                             iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
+#                                                                             return_options = TRUE, return_init = TRUE,
+#                                                                             diss = diss, alpha = alpha,transformed=TRUE),
+#                                                      plot = TRUE, worker_number = 1)
 
 
 
 # find candidate motifs with random initialization
 n_init = 20 # number of partially random plus random initialization to try
-find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=NULL,
+#find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=NULL,
                                                       name = './stock_prices_motifs_shorter/motifs', names_var = 'x(t)',
                                                       probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
                                                                              iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
                                                                              return_options = TRUE, return_init = TRUE,
                                                                              diss = diss, alpha = alpha,transformed=TRUE),
                                                       plot = TRUE, worker_number = 1)
-save(find_candidate_motifs_results, file = './stock_prices_motifs_shorter/motifs_candidate.RData')
-}
+#save(find_candidate_motifs_results, file = './stock_prices_motifs_shorter/motifs_candidate.RData')
+#}
 
 ### filter candidate motifs based on silhouette average and size
 silhouette_average = Reduce(rbind, Reduce(rbind,
@@ -407,6 +407,8 @@ cluster_candidate_motifs_results$Y1=Y1_all
 motifs_search_results = motifs_search(cluster_candidate_motifs_results,R_all=0.0002,
                                       use_real_occurrences = FALSE, length_diff = 0.3,
                                       different_R_m_finding = TRUE)
+
+save(motifs_search_results, file = './stock_prices_motifs_shorter//motifs_search_results.RData')
 
 
 
@@ -648,35 +650,44 @@ years_all[[24]]=years_AVGO_names
 
 
 #normalized with time
-pdf('./stock_prices_motifs_shorter/motifs_search_results.pdf', height = 18, width = 30)
+pdf('./stock_prices_motifs_shorter//motifs_search_results.pdf', height = 13, width = 38)
 motifs_search_plot_norm_time(motifs_search_results, ylab = 'x(t)', freq_threshold = 5,transformed=TRUE,data_smoothed=data_smoothed_all_stocks)
 dev.off()
 
 
 
-#Motifs analysis for fmd including shorter motifs
-column_names=c("Motif","Length","Frequency","Radius")
-motifs_analysis=data.frame(c(1:68),motifs_search_results$V_length,
+
+
+
+
+
+
+
+#Motifs analysis for fmd 
+column_names=c("Motif","Length","Frequency","Radius","Initialization")
+motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
                            motifs_search_results$V_frequencies,
-                           motifs_search_results$R_motifs)
+                           motifs_search_results$R_motifs*100000,
+                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
 colnames(motifs_analysis)=column_names
 
 
 #Considering only the motifs with more than 5 occurrences:
-#filtered_motifs_analysis=motifs_analysis[motifs_analysis$Frequency >= 5, ]
+filtered_motifs_analysis=motifs_analysis[motifs_analysis$Frequency >= 5, ]
 # Renumber the Motif column
-#filtered_motifs_analysis$Motif=seq_len(nrow(filtered_motifs_analysis))
+filtered_motifs_analysis$Motif=seq_len(nrow(filtered_motifs_analysis))
 
-motifs_analysis_ordered=motifs_analysis[order(motifs_analysis$Length),]
+motifs_analysis_ordered=filtered_motifs_analysis[order(filtered_motifs_analysis$Length),]
 
 
 library("writexl")
 motifs_analysis_table=data.frame(Motif=motifs_analysis_ordered$Motif,
                                  Length=motifs_analysis_ordered$Length,
                                  Frequency=motifs_analysis_ordered$Frequency,
-                                 Radius=motifs_analysis_ordered$Radius)
+                                 Radius=motifs_analysis_ordered$Radius,
+                                 Initialization=motifs_analysis_ordered$Initialization)
 
-write_xlsx(motifs_analysis_table,"./stock_prices_motifs_shorter/simulated_motifs_analysis.xlsx")
+write_xlsx(motifs_analysis_ordered,"./stock_prices_motifs_shorter//motifs_analysis.xlsx")
 
 
 
@@ -684,8 +695,8 @@ write_xlsx(motifs_analysis_table,"./stock_prices_motifs_shorter/simulated_motifs
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Length=motifs_analysis_ordered$Length,
                                        Frequency=motifs_analysis_ordered$Frequency,
-                                       Radius=motifs_analysis_ordered$Radius*100000)
+                                       Radius=motifs_analysis_ordered$Radius,
+                                       Initialization=motifs_analysis_ordered$Initialization)
 library("xtable")
 print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = FALSE)
-
 
