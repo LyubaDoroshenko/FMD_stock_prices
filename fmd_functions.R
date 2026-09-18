@@ -3676,7 +3676,7 @@ motifs_search_plot_norm_time <- function(motifs_search_results,ylab='',freq_thre
         }else{
           legend_text=paste('motif',unique(motifs_in_curve))
         }
-        legend('left',legend_text,col=rainbow(K)[unique(motifs_in_curve)],lwd=7,lty=1,bty="n",xpd=TRUE,cex=2.5)
+        legend('left',legend_text,col=rainbow(K)[unique(motifs_in_curve)],lwd=7,lty=1,bty="n",xpd=TRUE,cex=2.2)
         return()},motifs_search_results$Y0,motifs_search_results$Y1,seq_len(N))
     }
   
