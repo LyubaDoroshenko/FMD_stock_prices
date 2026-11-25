@@ -9,7 +9,7 @@
 #The same procedure has been done with all the other curves that have been excluded from functional motif disvery
 #due to the correlation matters, but that were employed for functional motif search.
 
-#For the correlation matters we consider the training interval in common
+#For the correlation matters we consider the interval in common
 #for all the stocks from April 3, 2014 to December 31, 2020.
 
 
@@ -93,28 +93,24 @@ for(i in 1:length(list_entire_fin)){
 #Because GOOG is the stock that has less available data and it starts on April 3, 2014
 common=function(x){
   x=x[x$Date>="2014-04-03",]#Year, month, day
+  x=x[x$Date<="2020-12-31",]
 }
 
 
 list_common=lapply(list_entire_fin,common)
 
-training=function(x){
-  x=x[x$Date<="2020-12-31",]
-}
-
-list_entire_training=lapply(list_entire_fin,training)
-
-list_common_training=lapply(list_common,training)
-
 
 #Detrending the common part substracting each title's trend separately
 library("lubridate")#for decimal_date              #year-month-day
-dates_stocks=c(rep(decimal_date(as.Date("2014-04-03")),length(list_entire_fin)))
-list_common_training_ts=list()
+start_date <- as.Date("2014-04-03")
+end_date <- as.Date("2020-12-31")
+freq <- (nrow(list_common[[1]]) - 1) / (decimal_date(end_date) - decimal_date(start_date))
+dates_stocks <- rep(decimal_date(start_date), length(list_entire_fin))
+list_common_ts=list()
 for(i in 1:length(names_stocks)){
-  list_common_training_ts[[i]]=ts(list_common_training[[i]]$Price,start = dates_stocks[[i]], frequency = 250)
+  list_common_ts[[i]]=ts(list_common[[i]]$Price, start = dates_stocks[i], frequency = freq)
 }
-names(list_common_training_ts)=names_stocks
+names(list_common_ts)=names_stocks
 
 
 #Function to substract the linear trend
@@ -126,7 +122,7 @@ detrend_calculate=function(series){
 
 
 
-titles_common_detrended=lapply(list_common_training_ts,detrend_calculate)
+titles_common_detrended=lapply(list_common_ts,detrend_calculate)
 titles_common_detrended_2=data.frame(titles_common_detrended)
 
 # Clustering based on Spearman correlation
@@ -144,17 +140,17 @@ final_titles_common=titles_common_detrended_2
 
 
 BAC_norm=(final_titles_common$BAC-min(final_titles_common$BAC))/(max(final_titles_common$BAC)-min(final_titles_common$BAC))
-
 JPM_norm=(final_titles_common$JPM-min(final_titles_common$JPM))/(max(final_titles_common$JPM)-min(final_titles_common$JPM))
-
 WFC_norm=(final_titles_common$WFC-min(final_titles_common$WFC))/(max(final_titles_common$WFC)-min(final_titles_common$WFC))
-
-
-plot(BAC_norm,type="l",ylab="Normalized price",xlab="Time")
+pdf("./normalized_correlated.pdf", height = 5, width = 8)
+plot(BAC_norm,type="l",ylab="Normalized price",xlab="")
 lines(JPM_norm,col="red")
 lines(WFC_norm,col="green")
-legend("topright", legend=c("BAC", "JPM","WFC"),
+legend("topleft", legend=c("BAC", "JPM","WFC"),
        col=c("black", "red","green"),lty=1, cex=0.8)
+dev.off()
+
+
 #remove the most correlated stocks
 final_titles_common$ABBV=NULL
 final_titles_common$TXN=NULL
@@ -177,6 +173,7 @@ final_titles_common$TMO=NULL
 final_titles_common$QCOM=NULL
 final_titles_common$NEE=NULL
 final_titles_common$PG=NULL
+
 
 ######################################
 ######################################
@@ -205,6 +202,29 @@ names_col=function(x){
 }
 list_entire_fin_uncorrelated=lapply(list_entire_uncorrelated,names_col)
 
+
+# Check the maximum correlation between the retained stocks
+titles_common_detrended_2_uncorrelated = data.frame(titles_common_detrended_2[names(list_entire_uncorrelated)])
+cor_mat <- cor(titles_common_detrended_2_uncorrelated, method="spearman")
+ind <- which(upper.tri(cor_mat), arr.ind = TRUE)
+cor_pairs <- data.frame(
+  stock1 = rownames(cor_mat)[ind[, 1]],
+  stock2 = colnames(cor_mat)[ind[, 2]],
+  correlation = cor_mat[ind]
+)
+cor_pairs <- cor_pairs[order(abs(cor_pairs$correlation), decreasing = TRUE), ]
+head(cor_pairs, 10)
+
+AAPL_norm=(final_titles_common$AAPL-min(final_titles_common$AAPL))/(max(final_titles_common$AAPL)-min(final_titles_common$AAPL))
+MSFT_norm=(final_titles_common$MSFT-min(final_titles_common$MSFT))/(max(final_titles_common$MSFT)-min(final_titles_common$MSFT))
+pdf("./normalized_uncorrelated.pdf", height = 5, width = 8)
+plot(AAPL_norm,type="l",ylab="Normalized price",xlab="",col="magenta")
+lines(MSFT_norm,col="blue")
+legend("topleft", legend=c("AAPL", "MSFT"),
+       col=c("magenta", "blue"),lty=1, cex=0.8)
+dev.off()
+
+
 #Comparing the dates between SP500 and the other stocks
 SP_dates=list()
 only_sp_dates=list()#here are the dates that are in SP500 but not in the other stocks
@@ -228,15 +248,11 @@ for(i in 1:length(list_entire_fin_uncorrelated)){
 
 
 #Subsetting the dates until Dec 31, 2020
-training=function(x){
+selected_period=function(x){
   x=x[x$Date<="2020-12-31",]
 }
 
-test=function(x){
-  x=x[x$Date>"2020-12-31",]
-}
-
-list_training_uncorrelated=lapply(list_entire_fin_uncorrelated,training)
+list_uncorrelated=lapply(list_entire_fin_uncorrelated,selected_period)
 
 
 library("lubridate")
@@ -245,17 +261,15 @@ Dates=c(rep("2009-03-10",4),
         "2012-05-18",rep("2009-03-10",6),"2009-08-06",
         rep("2009-03-10",14)
 )
-list_training_ts_uncorr=list()
-for(i in 1:length(list_training_uncorrelated)){
-  list_training_ts_uncorr[[i]]=ts(list_training_uncorrelated[[i]]$Price,start=decimal_date(as.Date(Dates[i])),frequency=250)
+list_ts_uncorr=list()
+for(i in 1:length(list_uncorrelated)){
+  list_ts_uncorr[[i]]=ts(list_uncorrelated[[i]]$Price,start=decimal_date(as.Date(Dates[i])),frequency=250)
 }
 
-names(list_training_ts_uncorr)=names(list_training_uncorrelated)
+names(list_ts_uncorr)=names(list_uncorrelated)
 
 
-list_test=lapply(list_entire_fin_uncorrelated,test)
-
-titles_of_interest_detrend=lapply(list_training_ts_uncorr,detrend_calculate)
+titles_of_interest_detrend=lapply(list_ts_uncorr,detrend_calculate)
 
 
 names(titles_of_interest_detrend)=names(final_titles_common)
@@ -286,7 +300,7 @@ plot(data_smoothed$AAPL$v0,type="l",main="AAPL",xlab="Time",ylab="Price")
 
 
 
-list_training=lapply(list_entire_fin,training)
+list_all=lapply(list_entire_fin,selected_period)
 
 library("lubridate")
 Dates=c(rep("2009-03-10",4),
@@ -297,12 +311,12 @@ Dates=c(rep("2009-03-10",4),
         "2009-03-10","2009-03-10","2009-03-10","2009-08-06",
         rep("2009-03-10",27)
 )
-list_training_ts=list()
-for(i in 1:length(list_training)){
-  list_training_ts[[i]]=ts(list_training[[i]]$Price,start=decimal_date(as.Date(Dates[i])),frequency=250)
+list_all_ts=list()
+for(i in 1:length(list_all)){
+  list_all_ts[[i]]=ts(list_all[[i]]$Price,start=decimal_date(as.Date(Dates[i])),frequency=250)
 }
 
-names(list_training_ts)=names_stocks
+names(list_all_ts)=names_stocks
 
 
 
@@ -310,12 +324,10 @@ names(list_training_ts)=names_stocks
 
 
 
-
-list_test=lapply(list_entire_fin,test)
 
 #detrend substracting each series trend
 
-titles_of_interest_detrend=lapply(list_training_ts,detrend_calculate)
+titles_of_interest_detrend=lapply(list_all_ts,detrend_calculate)
 
 
 names(titles_of_interest_detrend)=c("AAPL","MSFT","AMZN","GOOGL","GOOG","TSLA","BRKb","NVDA",
