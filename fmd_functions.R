@@ -2120,9 +2120,10 @@ find_candidate_motifs <- function(Y0,Y1=NULL,K,c,n_init=10,name='results',names_
   index=intersect(index_sil,index_size)
   if(length(index)==0)
     return(NULL)
+  v_init=if(is.null(probKMA_results$v_init[index])) as.list(rep("random",length(index))) else probKMA_results$v_init[index]
   return(list(V0_clean=probKMA_results$V0_clean[index],V1_clean=probKMA_results$V1_clean[index],
               D=probKMA_results$D[,index],D_clean=probKMA_results$D_clean[,index],P=probKMA_results$P[,index],P_clean=probKMA_results$P_clean[,index],
-              c=probKMA_results$c[index],K=rep(probKMA_results$K,length(index)),v_init=probKMA_results$v_init[index]))
+              c=probKMA_results$c[index],K=rep(probKMA_results$K,length(index)),v_init=v_init))
 }
 
 
@@ -2185,7 +2186,7 @@ filter_candidate_motifs <- function(find_candidate_motifs_results,sil_threshold=
   P_clean=Reduce(cbind,lapply(motifs,function(motifs) motifs$P_clean))[,index]
   c=Reduce(c,lapply(motifs,function(motifs) motifs$c))[index]
   K=Reduce(c,lapply(motifs,function(motifs) motifs$K))[index]
-  v_init=Reduce(c,lapply(motifs,function(motifs) motifs$v_init))[index]
+  v_init=unlist(lapply(motifs,function(motifs) motifs$v_init),recursive=FALSE)[index]
   
   ### output ##################################################################################################
   load(paste0(name,"_K",K[1],"_c",c[1],'/random',1,'.RData'))
