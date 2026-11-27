@@ -570,6 +570,13 @@ dev.off()
 
 
 
+v_occurrences_curve = lapply(motifs_search_results$V_occurrences, 
+                             function(v_occurrences){
+                               table(v_occurrences[,1])
+                             })
+v_occurrences_curve_max = unlist(lapply(v_occurrences_curve, max))
+sum(v_occurrences_curve_max>1)
+v_occurrences_curve_max
 
 
 
@@ -580,7 +587,7 @@ column_names=c("Motif","Length","Frequency","Radius","Initialization")
 motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
                            motifs_search_results$V_frequencies,
                            motifs_search_results$R_motifs*100000,
-                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
+                           c("random","user")[unlist(lapply(motifs_search_results$v_init, is.list))*1+1])
 colnames(motifs_analysis)=column_names
 
 
@@ -603,7 +610,6 @@ write_xlsx(motifs_analysis_ordered,"./stock_prices_motifs/motifs_analysis.xlsx")
 
 
 
-#Let's multiply the radius for 1000
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Length=motifs_analysis_ordered$Length,
                                        Frequency=motifs_analysis_ordered$Frequency,
@@ -611,4 +617,3 @@ motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Initialization=motifs_analysis_ordered$Initialization)
 library("xtable")
 print(xtable(motifs_analysis_table_latex),digits=c(5,5,5,5),include.rownames = FALSE)
-

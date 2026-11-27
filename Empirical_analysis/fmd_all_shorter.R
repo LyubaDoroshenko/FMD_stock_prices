@@ -367,12 +367,12 @@ for(i in 1:length(data_smoothed_all_stocks)){
 # find candidate motifs with random initialization
 n_init = 20 # number of partially random plus random initialization to try
 #find_candidate_motifs_results = find_candidate_motifs(Y0, Y1, K, c, n_init,V_init=NULL,
-                                                      name = './stock_prices_motifs_shorter/motifs', names_var = 'x(t)',
-                                                      probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
-                                                                             iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
-                                                                             return_options = TRUE, return_init = TRUE,
-                                                                             diss = diss, alpha = alpha,transformed=TRUE),
-                                                      plot = TRUE, worker_number = 1)
+#                                                      name = './stock_prices_motifs_shorter/motifs', names_var = 'x(t)',
+#                                                      probKMA_options = list(c_max = c_max, standardize = FALSE, iter_max = 1000,
+#                                                                             iter4elong = iter4elong, trials_elong = trials_elong, max_gap = max_gap,
+#                                                                             return_options = TRUE, return_init = TRUE,
+#                                                                             diss = diss, alpha = alpha,transformed=TRUE),
+#                                                      plot = TRUE, worker_number = 1)
 #save(find_candidate_motifs_results, file = './stock_prices_motifs_shorter/motifs_candidate.RData')
 #}
 
@@ -668,7 +668,7 @@ column_names=c("Motif","Length","Frequency","Radius","Initialization")
 motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
                            motifs_search_results$V_frequencies,
                            motifs_search_results$R_motifs*100000,
-                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
+                           c("random","user")[unlist(lapply(motifs_search_results$v_init, is.list))*1+1])
 colnames(motifs_analysis)=column_names
 
 
@@ -691,7 +691,6 @@ write_xlsx(motifs_analysis_ordered,"./stock_prices_motifs_shorter//motifs_analys
 
 
 
-#Let's multiply the radius for 1000
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Length=motifs_analysis_ordered$Length,
                                        Frequency=motifs_analysis_ordered$Frequency,
