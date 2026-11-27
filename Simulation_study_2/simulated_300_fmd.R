@@ -316,7 +316,7 @@ column_names=c("Motif","Length","Frequency","Radius","Initialization")
 motifs_analysis=data.frame(c(1:length(motifs_search_results$V_length)),motifs_search_results$V_length,
                            motifs_search_results$V_frequencies,
                            motifs_search_results$R_motifs*1000,
-                           c("user","random")[unlist(lapply(motifs_search_results$v_init,is.null))*1+1])
+                           c("random","user")[unlist(lapply(motifs_search_results$v_init, is.list))*1+1])
 colnames(motifs_analysis)=column_names
 
 
