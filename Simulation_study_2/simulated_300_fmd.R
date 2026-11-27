@@ -339,7 +339,6 @@ write_xlsx(motifs_analysis_ordered,"./sim300_fmd/simulated_motifs_analysis.xlsx"
 
 
 
-#Let's multiply the radius for 1000
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Length=motifs_analysis_ordered$Length,
                                        Frequency=motifs_analysis_ordered$Frequency,

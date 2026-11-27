@@ -322,7 +322,7 @@ column_names=c("Motif","Length","Frequency","Radius","Initialization")
 motifs_analysis=data.frame(c(1:length(motifs_search_results_05$V_length)),motifs_search_results_05$V_length,
                            motifs_search_results_05$V_frequencies,
                            motifs_search_results_05$R_motifs*1000,
-                           c("user","random")[unlist(lapply(motifs_search_results_05$v_init,is.null))*1+1])
+                           c("random","user")[unlist(lapply(motifs_search_results_05$v_init, is.list))*1+1])
 colnames(motifs_analysis)=column_names
 
 
@@ -345,7 +345,6 @@ write_xlsx(motifs_analysis_ordered,"./sim300_alpha05_fmd/simulated_motifs_analys
 
 
 
-#Let's multiply the radius for 1000
 motifs_analysis_table_latex=data.frame(Motif=motifs_analysis_ordered$Motif,
                                        Length=motifs_analysis_ordered$Length,
                                        Frequency=motifs_analysis_ordered$Frequency,
